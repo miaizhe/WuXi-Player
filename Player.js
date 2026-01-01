@@ -329,13 +329,18 @@
             border-radius: 20px !important; 
             font-size: var(--lrc-font-size, 14px) !important; 
             backdrop-filter: blur(8px) !important;
-            white-space: pre-wrap !important; overflow: hidden !important;
+            white-space: pre-wrap !important; 
+            overflow: hidden !important;
             position: relative !important;
             max-width: 80% !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
             pointer-events: auto !important;
             cursor: default !important;
             user-select: none !important;
+            line-height: 1.5 !important;
+            word-break: break-all !important;
+            display: inline-block !important;
+            text-align: center !important;
         }
         
         /* 编辑模式样式 */
@@ -359,33 +364,27 @@
             display: none !important;
         }
         #p-lrc-container.is-editing .edit-hint { display: block !important; }
-            max-width: 85% !important; 
-            box-shadow: 0 4px 12px rgba(0,0,0,calc(var(--lrc-opacity) * 0.3)) !important;
-            border: 1px solid rgba(255,255,255,calc(var(--lrc-opacity) * 0.2)) !important;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
-            transition: all 0.3s ease !important;
-            position: relative !important;
-            display: inline-block !important;
-            line-height: 1.5 !important;
-            word-break: break-all !important;
-        }
+        
         /* 歌词高亮效果 */
         #p-lrc-text::after {
             content: attr(data-text);
-            position: absolute; left: 0; top: 0; 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
             padding: 8px 20px !important;
-            color: var(--lrc-active-color);
+            color: var(--lrc-active-color) !important;
             width: 100% !important; 
             height: 100% !important;
-            overflow: hidden; 
+            overflow: hidden !important; 
             white-space: pre-wrap !important;
-             word-break: break-all !important;
-             transition: clip-path 0.1s linear !important;
-             box-sizing: border-box !important;
+            word-break: break-all !important;
+            transition: clip-path 0.1s linear !important;
+            box-sizing: border-box !important;
             display: block !important;
             z-index: 1 !important;
             text-align: center !important;
-            clip-path: inset(0 calc(100% - var(--lrc-active-width, 0%)) 0 0);
+            clip-path: inset(0 calc(100% - var(--lrc-active-width, 0%)) 0 0) !important;
+            pointer-events: none !important;
         }
 
         .p-list-item {
