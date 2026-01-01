@@ -70,7 +70,7 @@
 
     function draw() {
         requestAnimationFrame(draw);
-        if (!configSettings.showVisualizer) return;
+        if (!configSettings.showVisualizer || !visualizerCanvas) return;
         
         const canvas = visualizerCanvas;
         const ctx = canvas.getContext('2d');
@@ -119,29 +119,33 @@
     const style = document.createElement('style');
     style.innerHTML = `
         #js-mini-player {
-            position: fixed; bottom: 50px; left: 0; 
-            z-index: 2147483640; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            display: flex; align-items: center;
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(10px);
-            padding: 10px;
-            border-radius: 0 30px 30px 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            width: 300px; transform: translateX(0);
-            border: 1px solid rgba(0,0,0,0.05);
-            user-select: none;
-            pointer-events: auto;
+            position: fixed !important; bottom: 50px !important; left: 0 !important; 
+            z-index: 2147483640 !important; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
+            display: flex !important; align-items: center !important;
+            background: rgba(255, 255, 255, 0.95) !important; 
+            backdrop-filter: blur(10px) !important;
+            padding: 10px !important;
+            border-radius: 0 30px 30px 0 !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+            width: 300px !important; height: 65px !important;
+            transform: translateX(0) !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            user-select: none !important;
+            pointer-events: auto !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
         }
+        #js-mini-player * { box-sizing: border-box !important; margin: 0; padding: 0; }
         /* 隐藏状态：只露出封面的一小部分 */
         #js-mini-player.is-hidden {
-            transform: translateX(-260px);
-            cursor: pointer;
-            opacity: 0.6;
+            transform: translateX(-260px) !important;
+            cursor: pointer !important;
+            opacity: 0.6 !important;
         }
         #js-mini-player.is-hidden:hover {
-            opacity: 1;
-            transform: translateX(-250px);
+            opacity: 1 !important;
+            transform: translateX(-250px) !important;
         }
         #p-cover { 
             width: 45px; height: 45px; border-radius: 50%; 
@@ -156,56 +160,59 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        .p-info { flex: 1; overflow: hidden; }
-        .p-title { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .p-artist { font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .p-controls { display: flex; gap: 6px; margin-left: 10px; }
+        .p-info { flex: 1 !important; overflow: hidden !important; display: block !important; }
+        .p-title { font-size: 13px !important; font-weight: 600 !important; color: #333 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+        .p-artist { font-size: 11px !important; color: #888 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+        .p-controls { display: flex !important; gap: 6px !important; margin-left: 10px !important; }
         .p-btn { 
-            cursor: pointer; background: #f5f5f7; width: 30px; height: 30px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; transition: all 0.2s ease;
-            color: #555;
+            cursor: pointer !important; background: #f5f5f7 !important; width: 30px !important; height: 30px !important; 
+            border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; 
+            font-size: 14px !important; transition: all 0.2s ease !important;
+            color: #555 !important; border: none !important;
         }
         .p-btn:hover { background: #007aff; color: #fff; transform: scale(1.1); }
         .p-btn:active { transform: scale(0.9); }
         
         /* 歌单列表样式 */
         #p-list-container {
-            position: absolute; bottom: 100%; left: 0; width: 100%; 
-            max-height: 0; background: rgba(255, 255, 255, 0.98); 
-            backdrop-filter: blur(15px); border-radius: 15px 15px 0 0;
-            overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.05);
-            border-bottom: none;
+            position: absolute !important; bottom: 100% !important; left: 0 !important; width: 100% !important; 
+            max-height: 0 !important; background: rgba(255, 255, 255, 0.98) !important; 
+            backdrop-filter: blur(15px) !important; border-radius: 15px 15px 0 0 !important;
+            overflow: hidden !important; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05) !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            border-bottom: none !important;
+            display: block !important;
         }
         #p-list-container.is-open {
-            max-height: 250px;
-            overflow-y: auto;
+            max-height: 250px !important;
+            overflow-y: auto !important;
         }
         
         /* 设置面板样式 */
         #p-settings-panel {
-            position: absolute; bottom: 100%; left: 0; width: 100%; 
-            max-height: 0; background: rgba(255, 255, 255, 0.98); 
-            backdrop-filter: blur(15px); border-radius: 15px 15px 0 0;
-            overflow: hidden; transition: max-height 0.4s ease;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.05);
-            z-index: 10;
+            position: absolute !important; bottom: 100% !important; left: 0 !important; width: 100% !important; 
+            max-height: 0 !important; background: rgba(255, 255, 255, 0.98) !important; 
+            backdrop-filter: blur(15px) !important; border-radius: 15px 15px 0 0 !important;
+            overflow: hidden !important; transition: max-height 0.4s ease !important;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05) !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            z-index: 10 !important;
+            display: block !important;
         }
         #p-settings-panel.is-open {
-            max-height: 300px;
-            padding: 15px;
-            overflow-y: auto;
+            max-height: 300px !important;
+            padding: 15px !important;
+            overflow-y: auto !important;
         }
-        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: #555; }
-        .setting-label { font-weight: 500; }
-        .setting-ops { display: flex; gap: 5px; }
+        .setting-row { display: flex !important; align-items: center !important; justify-content: space-between !important; margin-bottom: 12px !important; font-size: 13px !important; color: #555 !important; }
+        .setting-label { font-weight: 500 !important; }
+        .setting-ops { display: flex !important; gap: 5px !important; }
         .op-btn { 
-            padding: 4px 8px; border-radius: 6px; background: #f0f0f2; 
-            cursor: pointer; transition: 0.2s; font-size: 11px;
-            display: flex; align-items: center; justify-content: center;
+            padding: 4px 8px !important; border-radius: 6px !important; background: #f0f0f2 !important; 
+            cursor: pointer !important; transition: 0.2s !important; font-size: 11px !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            color: #333 !important; border: none !important;
         }
         #p-color-picker {
             width: 20px; height: 20px; padding: 0; border: none; 
@@ -228,24 +235,26 @@
         
         /* 歌词展示 */
         #p-lrc-container {
-            position: fixed; bottom: 20px; left: 0; right: 0;
-            z-index: 2147483647; height: 40px; pointer-events: none; text-align: center;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s ease; opacity: 0;
+            position: fixed !important; bottom: 20px !important; left: 0 !important; right: 0 !important;
+            z-index: 2147483647 !important; height: 40px !important; pointer-events: none !important; text-align: center !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            transition: all 0.3s ease !important; opacity: 0 !important;
+            margin: 0 !important; padding: 0 !important;
         }
-        #p-lrc-container.is-visible { opacity: 1; bottom: 25px; }
+        #p-lrc-container.is-visible { opacity: 1 !important; bottom: 25px !important; }
         #p-lrc-text {
-            background: rgba(0, 0, 0, var(--lrc-opacity, 0.6)); 
-            color: var(--lrc-color, #fff); 
-            padding: 6px 20px;
-            border-radius: 20px; font-size: 14px; backdrop-filter: blur(8px);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            max-width: 85%; 
-            box-shadow: 0 4px 12px rgba(0,0,0,calc(var(--lrc-opacity) * 0.3));
-            border: 1px solid rgba(255,255,255,calc(var(--lrc-opacity) * 0.2));
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-            position: relative;
+            background: rgba(0, 0, 0, var(--lrc-opacity, 0.6)) !important; 
+            color: var(--lrc-color, #fff) !important; 
+            padding: 6px 20px !important;
+            border-radius: 20px !important; font-size: 14px !important; backdrop-filter: blur(8px) !important;
+            white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+            max-width: 85% !important; 
+            box-shadow: 0 4px 12px rgba(0,0,0,calc(var(--lrc-opacity) * 0.3)) !important;
+            border: 1px solid rgba(255,255,255,calc(var(--lrc-opacity) * 0.2)) !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+            transition: all 0.3s ease !important;
+            position: relative !important;
+            display: inline-block !important;
         }
         #p-lrc-text::after {
             content: attr(data-text);
@@ -272,28 +281,41 @@
         
         /* 进度条 */
         .p-progress-container {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 4px;
-            background: rgba(0,0,0,0.05); border-radius: 0 0 30px 0; 
-            overflow: hidden; cursor: pointer; transition: height 0.2s;
+            position: absolute !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 4px !important;
+            background: rgba(0,0,0,0.05) !important; border-radius: 0 0 30px 0 !important; 
+            overflow: hidden !important; cursor: pointer !important; transition: height 0.2s !important;
+            display: block !important;
         }
         .p-progress-container:hover {
-            height: 8px;
+            height: 8px !important;
         }
         #p-progress {
-            height: 100%; width: 0%; background: #007aff; transition: width 0.1s linear;
+            height: 100% !important; width: 0% !important; background: #007aff !important; transition: width 0.1s linear !important;
         }
 
         /* 律动频谱样式 */
         #p-visualizer {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
-            z-index: 2147483645; pointer-events: none;
-            transition: opacity 0.5s;
+            position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 60px !important;
+            z-index: 2147483645 !important; pointer-events: none !important;
+            transition: opacity 0.5s !important;
+            margin: 0 !important; padding: 0 !important;
+            display: block !important;
         }
     `;
-    document.head.appendChild(style);
-    // 3. 结构
+    // 3. 初始化 UI (使用 Shadow DOM 彻底隔离样式)
+    const host = document.createElement('div');
+    host.id = 'via-music-player-host';
+    host.style.cssText = 'position:fixed; z-index:2147483640; bottom:0; left:0; width:0; height:0; overflow:visible;';
+    document.body.appendChild(host);
+
+    const shadow = host.attachShadow({ mode: 'open' });
+
+    // 将样式和结构放入 Shadow DOM
+    shadow.appendChild(style);
+    
     const container = document.createElement('div');
     container.id = 'js-mini-player';
+    container.className = 'is-hidden'; 
     container.innerHTML = `
         <div id="p-list-container"></div>
         <div id="p-settings-panel">
@@ -373,25 +395,25 @@
             <div id="p-progress"></div>
         </div>
     `;
-    document.body.appendChild(container);
+    shadow.appendChild(container);
 
     const lrcContainer = document.createElement('div');
     lrcContainer.id = 'p-lrc-container';
     lrcContainer.innerHTML = '<div id="p-lrc-text"></div>';
-    document.body.appendChild(lrcContainer);
+    shadow.appendChild(lrcContainer);
 
     const visualizerCanvas = document.createElement('canvas');
     visualizerCanvas.id = 'p-visualizer';
-    document.body.appendChild(visualizerCanvas);
+    shadow.appendChild(visualizerCanvas);
 
-    const playBtn = document.getElementById('p-play');
-    const listToggle = document.getElementById('p-list-toggle');
-    const listContainer = document.getElementById('p-list-container');
-    const settingsToggle = document.getElementById('p-settings-toggle');
-    const settingsPanel = document.getElementById('p-settings-panel');
-    const lrcText = document.getElementById('p-lrc-text');
-    const progressContainer = document.querySelector('.p-progress-container');
-    const progressBar = document.getElementById('p-progress');
+    const playBtn = shadow.getElementById('p-play');
+    const listToggle = shadow.getElementById('p-list-toggle');
+    const listContainer = shadow.getElementById('p-list-container');
+    const settingsToggle = shadow.getElementById('p-settings-toggle');
+    const settingsPanel = shadow.getElementById('p-settings-panel');
+    const lrcText = shadow.getElementById('p-lrc-text');
+    const progressContainer = shadow.querySelector('.p-progress-container');
+    const progressBar = shadow.getElementById('p-progress');
     
     // --- 核心逻辑：自动隐藏计时器 ---
     
@@ -412,7 +434,8 @@
     
     // 监听：点击页面其他地方立即折叠
     document.addEventListener('click', (e) => {
-        if (container && !container.contains(e.target) && e.target !== container) {
+        const path = e.composedPath();
+        if (container && !path.includes(container)) {
             container.classList.add('is-hidden');
             listContainer.classList.remove('is-open');
             settingsPanel.classList.remove('is-open');
@@ -443,7 +466,7 @@
     };
 
     // 设置项点击
-    document.getElementById('p-speed-ops').onclick = (e) => {
+    shadow.getElementById('p-speed-ops').onclick = (e) => {
         if (e.target.dataset.speed) {
             configSettings.speed = parseFloat(e.target.dataset.speed);
             audio.playbackRate = configSettings.speed;
@@ -451,14 +474,14 @@
             saveSettings();
         }
     };
-    document.getElementById('p-loop-ops').onclick = (e) => {
+    shadow.getElementById('p-loop-ops').onclick = (e) => {
         if (e.target.dataset.mode) {
             configSettings.loop = e.target.dataset.mode;
             updateOpsActive('p-loop-ops', 'mode', e.target.dataset.mode);
             saveSettings();
         }
     };
-    document.getElementById('p-lrc-ops').onclick = (e) => {
+    shadow.getElementById('p-lrc-ops').onclick = (e) => {
         if (e.target.dataset.lrc) {
             configSettings.showLrc = e.target.dataset.lrc === 'on';
             updateOpsActive('p-lrc-ops', 'lrc', e.target.dataset.lrc);
@@ -466,60 +489,60 @@
             saveSettings();
         }
     };
-    document.getElementById('p-lrc-color-ops').onclick = (e) => {
+    shadow.getElementById('p-lrc-color-ops').onclick = (e) => {
           if (e.target.dataset.color) {
               configSettings.lrcColor = e.target.dataset.color;
-              document.documentElement.style.setProperty('--lrc-color', configSettings.lrcColor);
+              container.style.setProperty('--lrc-color', configSettings.lrcColor);
               updateOpsActive('p-lrc-color-ops', 'color', e.target.dataset.color);
               saveSettings();
           }
       };
-      const colorPicker = document.getElementById('p-color-picker');
+      const colorPicker = shadow.getElementById('p-color-picker');
       colorPicker.oninput = (e) => {
           const color = e.target.value;
           configSettings.lrcColor = color;
-          document.documentElement.style.setProperty('--lrc-color', color);
+          container.style.setProperty('--lrc-color', color);
           // 取消其他预设颜色的激活状态，激活自定义按钮
-          document.getElementById('p-lrc-color-ops').querySelectorAll('.op-btn').forEach(btn => {
+          shadow.getElementById('p-lrc-color-ops').querySelectorAll('.op-btn').forEach(btn => {
               btn.classList.toggle('is-active', btn.id === 'p-custom-color-btn');
           });
           saveSettings();
       };
       colorPicker.onclick = (e) => e.stopPropagation(); // 防止触发父元素的 onclick
        
-       const opacitySlider = document.getElementById('p-lrc-opacity-slider');
-       const opacityVal = document.getElementById('p-lrc-opacity-val');
+       const opacitySlider = shadow.getElementById('p-lrc-opacity-slider');
+       const opacityVal = shadow.getElementById('p-lrc-opacity-val');
        opacitySlider.oninput = (e) => {
            const val = e.target.value;
            configSettings.lrcOpacity = val;
-           document.documentElement.style.setProperty('--lrc-opacity', val);
+           container.style.setProperty('--lrc-opacity', val);
            opacityVal.innerText = Math.round(val * 100) + '%';
            saveSettings();
        };
        opacitySlider.onclick = (e) => e.stopPropagation();
 
        // 高亮颜色设置
-       document.getElementById('p-lrc-active-color-ops').onclick = (e) => {
+       shadow.getElementById('p-lrc-active-color-ops').onclick = (e) => {
            if (e.target.dataset.color) {
                configSettings.lrcActiveColor = e.target.dataset.color;
-               document.documentElement.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
+               container.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
                updateOpsActive('p-lrc-active-color-ops', 'color', e.target.dataset.color);
                saveSettings();
            }
        };
-       const activeColorPicker = document.getElementById('p-active-color-picker');
+       const activeColorPicker = shadow.getElementById('p-active-color-picker');
        activeColorPicker.oninput = (e) => {
            const color = e.target.value;
            configSettings.lrcActiveColor = color;
-           document.documentElement.style.setProperty('--lrc-active-color', color);
-           document.getElementById('p-lrc-active-color-ops').querySelectorAll('.op-btn').forEach(btn => {
+           container.style.setProperty('--lrc-active-color', color);
+           shadow.getElementById('p-lrc-active-color-ops').querySelectorAll('.op-btn').forEach(btn => {
                btn.classList.toggle('is-active', btn.id === 'p-active-custom-color-btn');
            });
            saveSettings();
        };
        activeColorPicker.onclick = (e) => e.stopPropagation();
 
-       document.getElementById('p-visualizer-ops').onclick = (e) => {
+       shadow.getElementById('p-visualizer-ops').onclick = (e) => {
            if (e.target.dataset.viz) {
                configSettings.showVisualizer = e.target.dataset.viz === 'on';
                updateOpsActive('p-visualizer-ops', 'viz', e.target.dataset.viz);
@@ -529,7 +552,7 @@
        };
 
     function updateOpsActive(parentId, dataAttr, value) {
-        document.getElementById(parentId).querySelectorAll('.op-btn').forEach(btn => {
+        shadow.getElementById(parentId).querySelectorAll('.op-btn').forEach(btn => {
             btn.classList.toggle('is-active', btn.dataset[dataAttr] === value);
         });
     }
@@ -549,17 +572,17 @@
     // --- 播放器功能 ---
     async function init() {
         // 应用保存的设置到 UI
-        document.documentElement.style.setProperty('--lrc-color', configSettings.lrcColor);
-        document.documentElement.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
-        document.documentElement.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
+        container.style.setProperty('--lrc-color', configSettings.lrcColor);
+        container.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
+        container.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
         
-        const opacitySlider = document.getElementById('p-lrc-opacity-slider');
-        const opacityVal = document.getElementById('p-lrc-opacity-val');
+        const opacitySlider = shadow.getElementById('p-lrc-opacity-slider');
+        const opacityVal = shadow.getElementById('p-lrc-opacity-val');
         opacitySlider.value = configSettings.lrcOpacity;
         opacityVal.innerText = Math.round(configSettings.lrcOpacity * 100) + '%';
         
-        document.getElementById('p-color-picker').value = configSettings.lrcColor;
-        document.getElementById('p-active-color-picker').value = configSettings.lrcActiveColor;
+        shadow.getElementById('p-color-picker').value = configSettings.lrcColor;
+        shadow.getElementById('p-active-color-picker').value = configSettings.lrcActiveColor;
         
         updateOpsActive('p-speed-ops', 'speed', configSettings.speed.toFixed(1));
         updateOpsActive('p-loop-ops', 'mode', configSettings.loop);
@@ -568,10 +591,10 @@
         visualizerCanvas.style.opacity = configSettings.showVisualizer ? '1' : '0';
 
         // 如果是自定义颜色，激活自定义按钮
-        const isPresetColor = Array.from(document.getElementById('p-lrc-color-ops').querySelectorAll('[data-color]'))
+        const isPresetColor = Array.from(shadow.getElementById('p-lrc-color-ops').querySelectorAll('[data-color]'))
                                 .some(el => el.dataset.color === configSettings.lrcColor);
         if (!isPresetColor) {
-            document.getElementById('p-lrc-color-ops').querySelectorAll('.op-btn').forEach(btn => {
+            shadow.getElementById('p-lrc-color-ops').querySelectorAll('.op-btn').forEach(btn => {
                 btn.classList.toggle('is-active', btn.id === 'p-custom-color-btn');
             });
         } else {
@@ -579,10 +602,10 @@
         }
 
         // 高亮颜色同步
-        const isPresetActiveColor = Array.from(document.getElementById('p-lrc-active-color-ops').querySelectorAll('[data-color]'))
+        const isPresetActiveColor = Array.from(shadow.getElementById('p-lrc-active-color-ops').querySelectorAll('[data-color]'))
                                 .some(el => el.dataset.color === configSettings.lrcActiveColor);
         if (!isPresetActiveColor) {
-            document.getElementById('p-lrc-active-color-ops').querySelectorAll('.op-btn').forEach(btn => {
+            shadow.getElementById('p-lrc-active-color-ops').querySelectorAll('.op-btn').forEach(btn => {
                 btn.classList.toggle('is-active', btn.id === 'p-active-custom-color-btn');
             });
         } else {
@@ -602,7 +625,7 @@
                 }
             } catch (e) {}
         }
-        document.getElementById('p-title').innerText = "歌单加载失败";
+        shadow.getElementById('p-title').innerText = "歌单加载失败";
     }
 
     function renderPlaylist() {
@@ -626,9 +649,9 @@
     async function load(i) {
         currentIndex= i;
         const track = playlist[i];
-        document.getElementById('p-title').innerText = track.title;
-        document.getElementById('p-artist').innerText = track.author || '未知歌手';
-        document.getElementById('p-cover').src = track.pic;
+        shadow.getElementById('p-title').innerText = track.title;
+        shadow.getElementById('p-artist').innerText = track.author || '未知歌手';
+        shadow.getElementById('p-cover').src = track.pic;
         audio.src = track.url;
         audio.playbackRate = configSettings.speed;
         resetProgress();
@@ -710,11 +733,11 @@
         }
     };
     audio.onplay = () => {
-        document.getElementById('p-cover').classList.add('is-playing');
+        shadow.getElementById('p-cover').classList.add('is-playing');
         playBtn.innerText = '⏸';
     };
     audio.onpause = () => {
-        document.getElementById('p-cover').classList.remove('is-playing');
+        shadow.getElementById('p-cover').classList.remove('is-playing');
         playBtn.innerText = '▶';
     };// 播放/暂停
     playBtn.onclick = (e) => {
@@ -729,13 +752,13 @@
             audio.pause();
         }
     };
-    document.getElementById('p-next').onclick = (e) => {
+    shadow.getElementById('p-next').onclick = (e) => {
         e.stopPropagation();
         currentIndex = (currentIndex + 1) % playlist.length;
         load(currentIndex);
         audio.play().catch(() => {});
     };
-    document.getElementById('p-prev').onclick = (e) => {
+    shadow.getElementById('p-prev').onclick = (e) => {
         e.stopPropagation();
         currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
         load(currentIndex);
@@ -746,7 +769,7 @@
             audio.currentTime = 0;
             audio.play().catch(() => {});
         } else {
-            document.getElementById('p-next').click();
+            shadow.getElementById('p-next').click();
         }
     };
     init();
