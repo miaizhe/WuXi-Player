@@ -34,7 +34,9 @@
         lrcOpacity: 0.6,
         showVisualizer: true,
         showFloatingBall: true,
-        ballPos: { x: 10, y: 80 }
+        ballPos: { x: 10, y: 80 },
+        lrcPos: { y: 20 },
+        lrcSize: 14
     };
     // 读取保存的设置
     const savedSettings = localStorage.getItem('via-player-settings');
@@ -124,6 +126,10 @@
             --lrc-color: #ffffff;
             --lrc-active-color: #007aff;
             --lrc-opacity: 0.6;
+            --ball-x: 10px;
+            --ball-y: 80px;
+            --lrc-y: 20px;
+            --lrc-font-size: 14px;
         }
         #js-mini-player {
             position: fixed !important; 
@@ -311,19 +317,52 @@
         
         /* 歌词展示 */
         #p-lrc-container {
-            position: fixed !important; bottom: 20px !important; left: 0 !important; right: 0 !important;
+            position: fixed !important; 
+            bottom: var(--lrc-y, 20px) !important; 
+            left: 0 !important; right: 0 !important;
             z-index: 2147483647 !important; min-height: 50px !important; pointer-events: none !important; text-align: center !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
-            transition: all 0.3s ease !important; opacity: 0 !important;
+            transition: opacity 0.3s ease, bottom 0.3s ease !important; opacity: 0 !important;
             margin: 0 !important; padding: 0 !important;
         }
-        #p-lrc-container.is-visible { opacity: 1 !important; bottom: 25px !important; }
+        #p-lrc-container.is-visible { opacity: 1 !important; }
         #p-lrc-text {
             background: rgba(0, 0, 0, var(--lrc-opacity)) !important; 
             color: var(--lrc-color) !important; 
             padding: 8px 20px !important;
-            border-radius: 20px !important; font-size: 14px !important; backdrop-filter: blur(8px) !important;
+            border-radius: 20px !important; 
+            font-size: var(--lrc-font-size, 14px) !important; 
+            backdrop-filter: blur(8px) !important;
             white-space: pre-wrap !important; overflow: hidden !important;
+            position: relative !important;
+            max-width: 80% !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+            pointer-events: auto !important;
+            cursor: default !important;
+            user-select: none !important;
+        }
+        
+        /* 编辑模式样式 */
+        #p-lrc-container.is-editing #p-lrc-text {
+            outline: 2px dashed #007aff !important;
+            outline-offset: 4px !important;
+            cursor: move !important;
+            background: rgba(0, 122, 255, 0.2) !important;
+        }
+        .edit-hint {
+            position: absolute !important;
+            top: -30px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: #007aff !important;
+            color: #fff !important;
+            padding: 2px 8px !important;
+            border-radius: 4px !important;
+            font-size: 10px !important;
+            white-space: nowrap !important;
+            display: none !important;
+        }
+        #p-lrc-container.is-editing .edit-hint { display: block !important; }
             max-width: 85% !important; 
             box-shadow: 0 4px 12px rgba(0,0,0,calc(var(--lrc-opacity) * 0.3)) !important;
             border: 1px solid rgba(255,255,255,calc(var(--lrc-opacity) * 0.2)) !important;
@@ -499,6 +538,17 @@
                 <input type="range" id="p-lrc-opacity-slider" class="p-slider" min="0" max="1" step="0.01" value="0.6">
                 <span id="p-lrc-opacity-val" class="setting-value">60%</span>
             </div>
+            <div class="setting-row">
+                <span class="setting-label">编辑模式</span>
+                <div class="setting-ops">
+                    <button class="op-btn" id="p-edit-lrc-btn">歌词编辑</button>
+                </div>
+            </div>
+            <div class="setting-row" id="p-lrc-size-row" style="display:none;">
+                <span class="setting-label">歌词大小</span>
+                <input type="range" class="p-slider" id="p-lrc-size-slider" min="12" max="30" step="1">
+                <span class="setting-value" id="p-lrc-size-value">14px</span>
+            </div>
         </div>
         <img id="p-cover" src="">
         <div class="p-info">
@@ -525,7 +575,12 @@
 
     const lrcContainer = document.createElement('div');
     lrcContainer.id = 'p-lrc-container';
-    lrcContainer.innerHTML = '<div id="p-lrc-text"></div>';
+    lrcContainer.innerHTML = `
+        <div id="p-lrc-text">
+            <div class="edit-hint">拖拽调整位置</div>
+            等候播放...
+        </div>
+    `;
     shadow.appendChild(lrcContainer);
 
     const visualizerCanvas = document.createElement('canvas');
@@ -798,19 +853,88 @@
        };
 
        shadow.getElementById('p-floating-ops').onclick = (e) => {
-           if (e.target.dataset.ball) {
-               configSettings.showFloatingBall = e.target.dataset.ball === 'on';
-               updateOpsActive('p-floating-ops', 'ball', e.target.dataset.ball);
-               if (!configSettings.showFloatingBall) {
-                   floatingBall.classList.remove('is-visible');
-                   container.classList.remove('has-ball');
-               } else if (container.classList.contains('is-hidden')) {
-                   floatingBall.classList.add('is-visible');
-                   container.classList.add('has-ball');
-               }
-               saveSettings();
-           }
-       };
+        if (e.target.dataset.ball) {
+            configSettings.showFloatingBall = e.target.dataset.ball === 'on';
+            updateOpsActive('p-floating-ops', 'ball', e.target.dataset.ball);
+            if (!configSettings.showFloatingBall) {
+                floatingBall.classList.remove('is-visible');
+                container.classList.remove('has-ball');
+            } else if (container.classList.contains('is-hidden')) {
+                floatingBall.classList.add('is-visible');
+                container.classList.add('has-ball');
+            }
+            saveSettings();
+        }
+    };
+
+    // --- 歌词编辑模式逻辑 ---
+     const editLrcBtn = shadow.getElementById('p-edit-lrc-btn');
+     const lrcSizeRow = shadow.getElementById('p-lrc-size-row');
+     const lrcSizeSlider = shadow.getElementById('p-lrc-size-slider');
+     const lrcSizeValue = shadow.getElementById('p-lrc-size-value');
+
+    let isEditingLrc = false;
+    editLrcBtn.onclick = (e) => {
+        e.stopPropagation();
+        isEditingLrc = !isEditingLrc;
+        lrcContainer.classList.toggle('is-editing', isEditingLrc);
+        editLrcBtn.classList.toggle('is-active', isEditingLrc);
+        lrcSizeRow.style.display = isEditingLrc ? 'flex' : 'none';
+        
+        if (isEditingLrc) {
+            lrcContainer.classList.add('is-visible');
+            lrcSizeSlider.value = configSettings.lrcSize;
+            lrcSizeValue.innerText = configSettings.lrcSize + 'px';
+        } else {
+            if (audio.paused) lrcContainer.classList.remove('is-visible');
+            saveSettings();
+        }
+    };
+
+    lrcSizeSlider.oninput = (e) => {
+        const size = e.target.value;
+        configSettings.lrcSize = parseInt(size);
+        lrcSizeValue.innerText = size + 'px';
+        host.style.setProperty('--lrc-font-size', size + 'px');
+    };
+    lrcSizeSlider.onclick = (e) => e.stopPropagation();
+
+    let isLrcDragging = false;
+    let lrcStartY = 0;
+    let initialLrcY = 0;
+
+    const startLrcDrag = (e) => {
+        if (!isEditingLrc) return;
+        isLrcDragging = true;
+        lrcStartY = e.clientY || (e.touches && e.touches[0].clientY);
+        initialLrcY = configSettings.lrcPos.y;
+        lrcText.style.transition = 'none';
+        e.stopPropagation();
+    };
+
+    const moveLrcDrag = (e) => {
+        if (!isLrcDragging) return;
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const dy = lrcStartY - clientY;
+        let newY = initialLrcY + dy;
+        newY = Math.max(10, Math.min(window.innerHeight - 100, newY));
+        configSettings.lrcPos.y = newY;
+        host.style.setProperty('--lrc-y', newY + 'px');
+    };
+
+    const endLrcDrag = () => {
+        if (!isLrcDragging) return;
+        isLrcDragging = false;
+        lrcText.style.transition = '';
+        saveSettings();
+    };
+
+    lrcText.onmousedown = startLrcDrag;
+    lrcText.ontouchstart = startLrcDrag;
+    window.addEventListener('mousemove', moveLrcDrag);
+    window.addEventListener('mouseup', endLrcDrag);
+    window.addEventListener('touchmove', moveLrcDrag, { passive: false });
+    window.addEventListener('touchend', endLrcDrag);
 
     function updateOpsActive(parentId, dataAttr, value) {
         shadow.getElementById(parentId).querySelectorAll('.op-btn').forEach(btn => {
@@ -843,6 +967,8 @@
         host.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
         host.style.setProperty('--ball-x', configSettings.ballPos.x + 'px');
         host.style.setProperty('--ball-y', configSettings.ballPos.y + 'px');
+        host.style.setProperty('--lrc-y', configSettings.lrcPos.y + 'px');
+        host.style.setProperty('--lrc-font-size', configSettings.lrcSize + 'px');
         
         const opacitySlider = shadow.getElementById('p-lrc-opacity-slider');
         const opacityVal = shadow.getElementById('p-lrc-opacity-val');
