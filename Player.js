@@ -118,6 +118,11 @@
     // 2. 样式
     const style = document.createElement('style');
     style.innerHTML = `
+        :host {
+            --lrc-color: #ffffff;
+            --lrc-active-color: #007aff;
+            --lrc-opacity: 0.6;
+        }
         #js-mini-player {
             position: fixed !important; bottom: 50px !important; left: 0 !important; 
             z-index: 2147483640 !important; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -209,10 +214,11 @@
         .setting-label { font-weight: 500 !important; }
         .setting-ops { display: flex !important; gap: 5px !important; }
         .op-btn { 
-            padding: 4px 8px !important; border-radius: 6px !important; background: #f0f0f2 !important; 
+            padding: 4px 8px !important; border-radius: 6px !important; background: #f0f0f2; 
             cursor: pointer !important; transition: 0.2s !important; font-size: 11px !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
             color: #333 !important; border: none !important;
+            min-width: 30px !important; min-height: 24px !important;
         }
         #p-color-picker {
             width: 20px; height: 20px; padding: 0; border: none; 
@@ -231,23 +237,32 @@
         }
         .p-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
         .setting-value { font-size: 11px; color: #888; min-width: 30px; text-align: right; margin-left: 5px; }
-        .op-btn.is-active { background: #007aff; color: #fff; }
+        .op-btn.is-active { 
+            background: #007aff; color: #fff; 
+            box-shadow: 0 0 0 2px #007aff !important;
+        }
+        /* 颜色按钮激活时不改变背景色 */
+        #p-lrc-color-ops .op-btn.is-active,
+        #p-lrc-active-color-ops .op-btn.is-active {
+            background-color: unset;
+            border: 2px solid #007aff !important;
+        }
         
         /* 歌词展示 */
         #p-lrc-container {
             position: fixed !important; bottom: 20px !important; left: 0 !important; right: 0 !important;
-            z-index: 2147483647 !important; height: 40px !important; pointer-events: none !important; text-align: center !important;
+            z-index: 2147483647 !important; min-height: 40px !important; pointer-events: none !important; text-align: center !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
             transition: all 0.3s ease !important; opacity: 0 !important;
             margin: 0 !important; padding: 0 !important;
         }
         #p-lrc-container.is-visible { opacity: 1 !important; bottom: 25px !important; }
         #p-lrc-text {
-            background: rgba(0, 0, 0, var(--lrc-opacity, 0.6)) !important; 
-            color: var(--lrc-color, #fff) !important; 
-            padding: 6px 20px !important;
+            background: rgba(0, 0, 0, var(--lrc-opacity)) !important; 
+            color: var(--lrc-color) !important; 
+            padding: 8px 20px !important;
             border-radius: 20px !important; font-size: 14px !important; backdrop-filter: blur(8px) !important;
-            white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+            white-space: pre-wrap !important; overflow: hidden !important;
             max-width: 85% !important; 
             box-shadow: 0 4px 12px rgba(0,0,0,calc(var(--lrc-opacity) * 0.3)) !important;
             border: 1px solid rgba(255,255,255,calc(var(--lrc-opacity) * 0.2)) !important;
@@ -255,13 +270,23 @@
             transition: all 0.3s ease !important;
             position: relative !important;
             display: inline-block !important;
+            line-height: 1.5 !important;
+            word-break: break-all !important;
         }
+        /* 歌词高亮效果 */
         #p-lrc-text::after {
             content: attr(data-text);
-            position: absolute; left: 20px; top: 6px; 
-            color: var(--lrc-active-color, #007aff);
-            width: 0; overflow: hidden; white-space: nowrap;
-            transition: width 0.3s linear;
+            position: absolute; left: 0; top: 0; 
+            padding: 8px 20px !important;
+            color: var(--lrc-active-color);
+            width: var(--lrc-active-width, 0%); 
+            overflow: hidden; white-space: pre !important;
+            transition: width 0.1s linear;
+            box-sizing: border-box !important;
+            height: 100% !important;
+            display: block !important;
+            z-index: 1 !important;
+            text-align: center !important;
         }
 
         .p-list-item {
@@ -281,16 +306,42 @@
         
         /* 进度条 */
         .p-progress-container {
-            position: absolute !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 4px !important;
-            background: rgba(0,0,0,0.05) !important; border-radius: 0 0 30px 0 !important; 
+            position: absolute !important; 
+            bottom: 0 !important; 
+            left: 55px !important; 
+            right: 20px !important; 
+            height: 4px !important;
+            background: rgba(0,0,0,0.08) !important; 
+            border-radius: 2px !important;
             overflow: hidden !important; cursor: pointer !important; transition: height 0.2s !important;
             display: block !important;
+            z-index: 5 !important;
         }
         .p-progress-container:hover {
-            height: 8px !important;
+            height: 6px !important;
+            background: rgba(0,0,0,0.12) !important;
         }
         #p-progress {
-            height: 100% !important; width: 0% !important; background: #007aff !important; transition: width 0.1s linear !important;
+            height: 100% !important; width: 0%; background: #007aff !important; 
+            transition: width 0.1s linear !important;
+            position: relative !important;
+        }
+        #p-progress::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #007aff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .p-progress-container:hover #p-progress::after {
+            opacity: 1;
         }
 
         /* 律动频谱样式 */
@@ -345,24 +396,26 @@
             <div class="setting-row">
                 <span class="setting-label">歌词颜色</span>
                 <div class="setting-ops" id="p-lrc-color-ops">
-                    <span class="op-btn is-active" data-color="#ffffff" style="background:#fff;border:1px solid #ddd"></span>
+                    <span class="op-btn" data-color="#ffffff" style="background:#fff;border:1px solid #ddd"></span>
                     <span class="op-btn" data-color="#ffeb3b" style="background:#ffeb3b"></span>
                     <span class="op-btn" data-color="#4caf50" style="background:#4caf50"></span>
                     <span class="op-btn" data-color="#007aff" style="background:#007aff"></span>
-                    <span class="op-btn" id="p-custom-color-btn" title="自定义颜色">
-                        <input type="color" id="p-color-picker" value="#ffffff">
+                    <span class="op-btn" id="p-custom-color-btn" title="自定义颜色" style="position: relative; overflow: hidden; background: #fff;">
+                        <input type="color" id="p-color-picker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                        🎨
                     </span>
                 </div>
             </div>
             <div class="setting-row">
                 <span class="setting-label">歌词高亮</span>
                 <div class="setting-ops" id="p-lrc-active-color-ops">
-                    <span class="op-btn is-active" data-color="#007aff" style="background: #007aff"></span>
+                    <span class="op-btn" data-color="#007aff" style="background: #007aff"></span>
                     <span class="op-btn" data-color="#ff2d55" style="background: #ff2d55"></span>
                     <span class="op-btn" data-color="#ffcc00" style="background: #ffcc00"></span>
                     <span class="op-btn" data-color="#4cd964" style="background: #4cd964"></span>
-                    <span class="op-btn" id="p-active-custom-color-btn" style="background: linear-gradient(45deg, #f0f, #0ff); position: relative;">
+                    <span class="op-btn" id="p-active-custom-color-btn" title="自定义高亮" style="position: relative; overflow: hidden; background: #007aff;">
                         <input type="color" id="p-active-color-picker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                        ✨
                     </span>
                 </div>
             </div>
@@ -492,7 +545,7 @@
     shadow.getElementById('p-lrc-color-ops').onclick = (e) => {
           if (e.target.dataset.color) {
               configSettings.lrcColor = e.target.dataset.color;
-              container.style.setProperty('--lrc-color', configSettings.lrcColor);
+              host.style.setProperty('--lrc-color', configSettings.lrcColor);
               updateOpsActive('p-lrc-color-ops', 'color', e.target.dataset.color);
               saveSettings();
           }
@@ -501,7 +554,8 @@
       colorPicker.oninput = (e) => {
           const color = e.target.value;
           configSettings.lrcColor = color;
-          container.style.setProperty('--lrc-color', color);
+          host.style.setProperty('--lrc-color', color);
+          shadow.getElementById('p-custom-color-btn').style.background = color;
           // 取消其他预设颜色的激活状态，激活自定义按钮
           shadow.getElementById('p-lrc-color-ops').querySelectorAll('.op-btn').forEach(btn => {
               btn.classList.toggle('is-active', btn.id === 'p-custom-color-btn');
@@ -515,7 +569,7 @@
        opacitySlider.oninput = (e) => {
            const val = e.target.value;
            configSettings.lrcOpacity = val;
-           container.style.setProperty('--lrc-opacity', val);
+           host.style.setProperty('--lrc-opacity', val);
            opacityVal.innerText = Math.round(val * 100) + '%';
            saveSettings();
        };
@@ -525,7 +579,7 @@
        shadow.getElementById('p-lrc-active-color-ops').onclick = (e) => {
            if (e.target.dataset.color) {
                configSettings.lrcActiveColor = e.target.dataset.color;
-               container.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
+               host.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
                updateOpsActive('p-lrc-active-color-ops', 'color', e.target.dataset.color);
                saveSettings();
            }
@@ -534,7 +588,8 @@
        activeColorPicker.oninput = (e) => {
            const color = e.target.value;
            configSettings.lrcActiveColor = color;
-           container.style.setProperty('--lrc-active-color', color);
+           host.style.setProperty('--lrc-active-color', color);
+           shadow.getElementById('p-active-custom-color-btn').style.background = color;
            shadow.getElementById('p-lrc-active-color-ops').querySelectorAll('.op-btn').forEach(btn => {
                btn.classList.toggle('is-active', btn.id === 'p-active-custom-color-btn');
            });
@@ -557,24 +612,29 @@
         });
     }
 
-    // 进度条点击跳转
-    progressContainer.onclick = (e) => {
+    // 进度条点击/触摸跳转
+    const handleProgressClick = (e) => {
         e.stopPropagation();
-        if (audio.duration) {
+        if (audio.duration && isFinite(audio.duration)) {
             const rect = progressContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            if (clientX === undefined) return;
+            
+            const clickX = clientX - rect.left;
             const width = rect.width;
-            const seekTime = (clickX / width) * audio.duration;
+            const seekTime = Math.max(0, Math.min(audio.duration, (clickX / width) * audio.duration));
             audio.currentTime = seekTime;
         }
     };
+    progressContainer.onclick = handleProgressClick;
+    progressContainer.ontouchstart = handleProgressClick;
 
     // --- 播放器功能 ---
     async function init() {
         // 应用保存的设置到 UI
-        container.style.setProperty('--lrc-color', configSettings.lrcColor);
-        container.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
-        container.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
+        host.style.setProperty('--lrc-color', configSettings.lrcColor);
+        host.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
+        host.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
         
         const opacitySlider = shadow.getElementById('p-lrc-opacity-slider');
         const opacityVal = shadow.getElementById('p-lrc-opacity-val');
@@ -583,6 +643,8 @@
         
         shadow.getElementById('p-color-picker').value = configSettings.lrcColor;
         shadow.getElementById('p-active-color-picker').value = configSettings.lrcActiveColor;
+        shadow.getElementById('p-custom-color-btn').style.background = configSettings.lrcColor;
+        shadow.getElementById('p-active-custom-color-btn').style.background = configSettings.lrcActiveColor;
         
         updateOpsActive('p-speed-ops', 'speed', configSettings.speed.toFixed(1));
         updateOpsActive('p-loop-ops', 'mode', configSettings.loop);
@@ -682,15 +744,14 @@
         if (!lrcContent) return;
         
         const lines = lrcContent.split('\n');
-        // 优化正则：支持 [mm:ss.xx] 或 [mm:ss:xx] 或 [mm:ss]
         const pattern = /\[(\d{2}):(\d{2})[.:](\d{2,3})?\]/g;
+        const tempLyrics = [];
         
         lines.forEach(line => {
             const pureText = line.replace(pattern, '').trim();
             if (!pureText) return;
 
             let res;
-            // 重置正则的 lastIndex，确保每次 replace 后重新匹配时从头开始
             pattern.lastIndex = 0; 
             while ((res = pattern.exec(line)) !== null) {
                 const min = parseInt(res[1]);
@@ -698,10 +759,27 @@
                 const msStr = res[3] || '0';
                 const ms = parseInt(msStr) / (msStr.length === 3 ? 1000 : 100);
                 const time = min * 60 + sec + ms;
-                lyrics.push({ time, text: pureText });
+                tempLyrics.push({ time, text: pureText });
             }
         });
-        lyrics.sort((a, b) => a.time - b.time);
+        
+        if (tempLyrics.length === 0) return;
+        
+        // 按时间排序
+        tempLyrics.sort((a, b) => a.time - b.time);
+        
+        // 合并时间戳极近的歌词（通常是翻译或多行歌词）
+        let current = tempLyrics[0];
+        for (let i = 1; i < tempLyrics.length; i++) {
+            // 如果两行歌词时间间隔小于 0.8 秒，则认为是翻译或关联行，换行合并
+            if (tempLyrics[i].time - current.time < 0.8) {
+                current.text += '<br>' + tempLyrics[i].text;
+            } else {
+                lyrics.push(current);
+                current = tempLyrics[i];
+            }
+        }
+        lyrics.push(current);
     }
 
     function resetProgress() {
@@ -710,9 +788,9 @@
     }
 
     audio.ontimeupdate = () => {
-        if (audio.duration) {
+        if (audio.duration && isFinite(audio.duration)) {
             const pos = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = pos + '%';
+            if (progressBar) progressBar.style.width = pos + '%';
             
             // 处理歌词
             if (configSettings.showLrc && lyrics.length) {
@@ -723,11 +801,26 @@
                     else break;
                 }
                 
-                if (index !== -1 && index !== currentLrcIndex) {
-                    currentLrcIndex = index;
-                    lrcText.innerText = lyrics[index].text;
-                    lrcText.setAttribute('data-text', lyrics[index].text);
-                    lrcContainer.classList.add('is-visible');
+                if (index !== -1) {
+                    if (index !== currentLrcIndex) {
+                        currentLrcIndex = index;
+                        lrcText.innerHTML = lyrics[index].text;
+                        // 为了 ::after 伪元素能读取到换行后的纯文本，需要特殊处理 data-text
+                        lrcText.setAttribute('data-text', lyrics[index].text.replace(/<br>/g, '\n'));
+                        lrcContainer.classList.add('is-visible');
+                    }
+                    
+                    // 计算当前行歌词的进度
+                    const currentLine = lyrics[index];
+                    const nextLine = lyrics[index + 1];
+                    
+                    // 持续时间：取下一行时间减去当前行时间，如果是最后一行则取 5 秒或直到音频结束
+                    let lineDuration = nextLine ? (nextLine.time - currentLine.time) : (audio.duration - currentLine.time);
+                    if (lineDuration <= 0 || lineDuration > 10) lineDuration = 5; // 异常处理
+                    
+                    const elapsed = time - currentLine.time;
+                    const lineProgress = Math.min(100, Math.max(0, (elapsed / lineDuration) * 100));
+                    lrcText.style.setProperty('--lrc-active-width', lineProgress.toFixed(2) + '%');
                 }
             }
         }
