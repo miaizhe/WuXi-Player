@@ -124,8 +124,8 @@
             --lrc-opacity: 0.6;
         }
         #js-mini-player {
-            position: fixed !important; bottom: 50px !important; left: 0 !important; 
-            z-index: 2147483640 !important; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: fixed !important; bottom: 80px !important; left: 0 !important; 
+            z-index: 2147483645 !important; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
             display: flex !important; align-items: center !important;
             background: rgba(255, 255, 255, 0.95) !important; 
@@ -251,7 +251,7 @@
         /* 歌词展示 */
         #p-lrc-container {
             position: fixed !important; bottom: 20px !important; left: 0 !important; right: 0 !important;
-            z-index: 2147483647 !important; min-height: 40px !important; pointer-events: none !important; text-align: center !important;
+            z-index: 2147483647 !important; min-height: 50px !important; pointer-events: none !important; text-align: center !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
             transition: all 0.3s ease !important; opacity: 0 !important;
             margin: 0 !important; padding: 0 !important;
@@ -279,14 +279,17 @@
             position: absolute; left: 0; top: 0; 
             padding: 8px 20px !important;
             color: var(--lrc-active-color);
-            width: var(--lrc-active-width, 0%); 
-            overflow: hidden; white-space: pre !important;
-            transition: width 0.1s linear;
-            box-sizing: border-box !important;
+            width: 100% !important; 
             height: 100% !important;
+            overflow: hidden; 
+            white-space: pre-wrap !important;
+             word-break: break-all !important;
+             transition: clip-path 0.1s linear !important;
+             box-sizing: border-box !important;
             display: block !important;
             z-index: 1 !important;
             text-align: center !important;
+            clip-path: inset(0 calc(100% - var(--lrc-active-width, 0%)) 0 0);
         }
 
         .p-list-item {
@@ -346,11 +349,8 @@
 
         /* 律动频谱样式 */
         #p-visualizer {
-            position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 60px !important;
-            z-index: 2147483645 !important; pointer-events: none !important;
-            transition: opacity 0.5s !important;
-            margin: 0 !important; padding: 0 !important;
-            display: block !important;
+            position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: 100px !important;
+            pointer-events: none !important; z-index: 2147483640 !important; opacity: 0.6 !important;
         }
     `;
     // 3. 初始化 UI (使用 Shadow DOM 彻底隔离样式)
@@ -773,7 +773,7 @@
         for (let i = 1; i < tempLyrics.length; i++) {
             // 如果两行歌词时间间隔小于 0.8 秒，则认为是翻译或关联行，换行合并
             if (tempLyrics[i].time - current.time < 0.8) {
-                current.text += '<br>' + tempLyrics[i].text;
+                current.text += '\n' + tempLyrics[i].text;
             } else {
                 lyrics.push(current);
                 current = tempLyrics[i];
@@ -804,9 +804,9 @@
                 if (index !== -1) {
                     if (index !== currentLrcIndex) {
                         currentLrcIndex = index;
-                        lrcText.innerHTML = lyrics[index].text;
-                        // 为了 ::after 伪元素能读取到换行后的纯文本，需要特殊处理 data-text
-                        lrcText.setAttribute('data-text', lyrics[index].text.replace(/<br>/g, '\n'));
+                        lrcText.innerText = lyrics[index].text;
+                        // ::after 伪元素通过 data-text 读取相同文本，配合 white-space: pre-wrap 实现完美对齐
+                        lrcText.setAttribute('data-text', lyrics[index].text);
                         lrcContainer.classList.add('is-visible');
                     }
                     
