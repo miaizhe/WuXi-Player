@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         New Userscript
-// @namespace    https://viayoo.com/
-// @version      0.1
-// @description  try to take over the world!
-// @author       You
-// @run-at       document-end
+// @name         WuXi Music Player
+// @namespace    https://github.com/miaizhe/WuXi-Player
+// @version      0.3
+// @description  一个基于用户脚本的音乐播放器，支持网易云、QQ音乐、酷狗音乐、虾米音乐、百度音乐等平台。
+// @author       Miaizhe
+// @run-at       document-start
 // @match        https://*/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 (function() {
     // 1. 配置信息
