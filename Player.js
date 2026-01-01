@@ -49,6 +49,54 @@
     function saveSettings() {
         localStorage.setItem('via-player-settings', JSON.stringify(configSettings));
     }
+    // --- 跨站同步逻辑 ---
+    let lastSyncTime = 0;
+    function savePlaybackStatus() {
+        if (!audio.src || isNaN(audio.currentTime)) return;
+        const now = Date.now();
+        // 限制保存频率，每 2 秒保存一次，或者在暂停/切歌时立即保存
+        if (now - lastSyncTime < 2000 && !audio.paused) return;
+        
+        const status = {
+            currentIndex: currentIndex,
+            currentTime: audio.currentTime,
+            paused: audio.paused,
+            timestamp: now,
+            songId: playlist[currentIndex]?.id // 用于校验是否为同一首歌
+        };
+        localStorage.setItem('via-player-playback-status', JSON.stringify(status));
+        lastSyncTime = now;
+    }
+
+    function syncPlaybackStatus() {
+        const raw = localStorage.getItem('via-player-playback-status');
+        if (!raw) return;
+        try {
+            const status = JSON.parse(raw);
+            const now = Date.now();
+            // 如果同步数据超过 10 秒，认为是过时数据，不自动同步
+            if (now - status.timestamp > 10000) return;
+
+            // 只有当歌曲索引不同，或者进度差异超过 5 秒时才同步
+            if (status.currentIndex !== currentIndex) {
+                currentIndex = status.currentIndex;
+                load(currentIndex).then(() => {
+                    audio.currentTime = status.currentTime;
+                    if (!status.paused) audio.play().catch(() => {});
+                });
+            } else if (Math.abs(audio.currentTime - status.currentTime) > 5) {
+                audio.currentTime = status.currentTime;
+            }
+        } catch (e) {}
+    }
+
+    // 监听其他标签页的 storage 变化
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'via-player-playback-status') {
+            syncPlaybackStatus();
+        }
+    });
+    
     const audio = new Audio();
     audio.crossOrigin = "anonymous"; // 必须设置，否则无法进行音频分析
 
@@ -1021,6 +1069,7 @@
                     playlist = d; 
                     renderPlaylist();
                     load(0); 
+                    syncPlaybackStatus(); // 加载完歌单后尝试同步上次的播放进度
                     startAutoHide(); 
                     return; 
                 }
@@ -1131,6 +1180,7 @@
     }
 
     audio.ontimeupdate = () => {
+        savePlaybackStatus(); // 实时保存进度
         if (audio.duration && isFinite(audio.duration)) {
             const pos = (audio.currentTime / audio.duration) * 100;
             if (progressBar) progressBar.style.width = pos + '%';
@@ -1169,11 +1219,13 @@
         }
     };
     audio.onplay = () => {
+        savePlaybackStatus();
         shadow.getElementById('p-cover').classList.add('is-playing');
         floatingBall.classList.add('is-playing');
         playBtn.innerText = '⏸';
     };
     audio.onpause = () => {
+        savePlaybackStatus();
         shadow.getElementById('p-cover').classList.remove('is-playing');
         floatingBall.classList.remove('is-playing');
         playBtn.innerText = '▶';
