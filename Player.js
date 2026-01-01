@@ -609,6 +609,11 @@
     }
     function cancelAutoHide() {
         clearTimeout(autoHideTimer);
+    }
+    
+    // 强制弹出
+    function showPlayer() {
+        cancelAutoHide();
         container.classList.remove('is-hidden');
         container.classList.remove('has-ball');
         floatingBall.classList.remove('is-visible');
@@ -697,7 +702,7 @@
     floatingBall.onclick = (e) => {
         e.stopPropagation();
         if (!isDragging) {
-            cancelAutoHide();
+            showPlayer();
         }
     };
     // 监听：鼠标进入播放器区域不隐藏，离开则开始倒计时
@@ -711,11 +716,15 @@
             container.classList.add('is-hidden');
             listContainer.classList.remove('is-open');
             settingsPanel.classList.remove('is-open');
+            if (configSettings.showFloatingBall) {
+                container.classList.add('has-ball');
+                floatingBall.classList.add('is-visible');
+            }
         }
     });
-    // 监听：点击播放器区域（包括按钮）都要取消自动隐藏并防止折叠
+    // 监听：点击播放器区域（包括按钮）都要取消自动隐藏并强制弹出
     container.addEventListener('click', (e) => {
-        cancelAutoHide();
+        showPlayer();
         // 如果点击的是内部按钮，不需要在这里 stopPropagation，按钮自己会处理
         // 但如果点击的是背景，需要 stopPropagation 防止触发 document 的点击逻辑
         if (e.target === container || e.target.id === 'p-cover' || e.target.classList.contains('p-info')) {
@@ -1116,7 +1125,10 @@
 
     function resetProgress() {
         progressBar.style.width = '0%';
-        lrcContainer.classList.remove('is-visible');
+        // 只有当编辑模式未开启时，才根据播放状态控制歌词可见性
+        if (!isEditingLrc) {
+            lrcContainer.classList.remove('is-visible');
+        }
     }
 
     audio.ontimeupdate = () => {
@@ -1180,13 +1192,13 @@
         }
     };
     shadow.getElementById('p-next').onclick = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         currentIndex = (currentIndex + 1) % playlist.length;
         load(currentIndex);
         audio.play().catch(() => {});
     };
     shadow.getElementById('p-prev').onclick = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
         load(currentIndex);
         audio.play().catch(() => {});
@@ -1196,7 +1208,10 @@
             audio.currentTime = 0;
             audio.play().catch(() => {});
         } else {
-            shadow.getElementById('p-next').click();
+            // 不直接调用 click() 触发，避免触发 showPlayer 弹出逻辑
+            currentIndex = (currentIndex + 1) % playlist.length;
+            load(currentIndex);
+            audio.play().catch(() => {});
         }
     };
     init();
