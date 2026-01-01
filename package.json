@@ -1,0 +1,18 @@
+{
+  "name": "via-music-player",
+  "version": "0.1.0",
+  "description": "A mini music player userscript for Via browser",
+  "main": "Player.js",
+  "scripts": {
+    "start": "npx serve .",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "via",
+    "userscript",
+    "music-player",
+    "meting"
+  ],
+  "author": "You",
+  "license": "MIT"
+}
