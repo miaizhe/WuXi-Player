@@ -89,16 +89,12 @@
         let barHeight;
         let x = 0;
 
-        // 创建渐变色
-        const gradient = ctx.createLinearGradient(0, height, 0, 0);
         const color = configSettings.lrcActiveColor || '#007aff';
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         for (let i = 0; i < dataArray.length; i++) {
             barHeight = (dataArray[i] / 255) * height;
             
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = color;
             ctx.globalAlpha = 0.4;
             
             // 绘制圆角矩形
