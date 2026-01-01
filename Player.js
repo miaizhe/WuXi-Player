@@ -32,7 +32,9 @@
         lrcColor: '#ffffff',
         lrcActiveColor: '#007aff',
         lrcOpacity: 0.6,
-        showVisualizer: true
+        showVisualizer: true,
+        showFloatingBall: true,
+        ballPos: { x: 10, y: 80 }
     };
     // 读取保存的设置
     const savedSettings = localStorage.getItem('via-player-settings');
@@ -124,7 +126,9 @@
             --lrc-opacity: 0.6;
         }
         #js-mini-player {
-            position: fixed !important; bottom: 80px !important; left: 0 !important; 
+            position: fixed !important; 
+            bottom: var(--ball-y, 80px) !important; 
+            left: var(--ball-x, 0) !important; 
             z-index: 2147483645 !important; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
             display: flex !important; align-items: center !important;
@@ -142,15 +146,65 @@
             margin: 0 !important;
         }
         #js-mini-player * { box-sizing: border-box !important; margin: 0; padding: 0; }
-        /* 隐藏状态：只露出封面的一小部分 */
-        #js-mini-player.is-hidden {
-            transform: translateX(-260px) !important;
+        #js-mini-player.is-hidden { 
+            transform: translate(calc(var(--ball-x) * -1 - 260px), 0) !important; 
+            opacity: 0.8 !important;
             cursor: pointer !important;
-            opacity: 0.6 !important;
         }
         #js-mini-player.is-hidden:hover {
             opacity: 1 !important;
-            transform: translateX(-250px) !important;
+            transform: translate(calc(var(--ball-x) * -1 - 250px), 0) !important;
+        }
+        #js-mini-player.is-hidden.has-ball {
+            transform: scale(0) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* 悬浮球样式 */
+        #p-floating-ball {
+            position: fixed !important;
+            bottom: var(--ball-y, 80px) !important;
+            left: var(--ball-x, 10px) !important;
+            width: 45px !important;
+            height: 45px !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 50% !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            z-index: 2147483646 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            opacity: 0 !important;
+            transform: scale(0) !important;
+            pointer-events: none !important;
+        }
+        #p-floating-ball.is-visible {
+            opacity: 1 !important;
+            transform: scale(1) !important;
+            pointer-events: auto !important;
+        }
+        #p-floating-ball:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
+        }
+        #p-floating-ball img {
+            width: 70% !important;
+            height: 70% !important;
+            border-radius: 50% !important;
+            animation: p-rotate 5s linear infinite !important;
+            animation-play-state: paused !important;
+        }
+        #p-floating-ball.is-playing img {
+            animation-play-state: running !important;
+        }
+        @keyframes p-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         #p-cover { 
             width: 45px; height: 45px; border-radius: 50%; 
@@ -180,13 +234,16 @@
         
         /* 歌单列表样式 */
         #p-list-container {
-            position: absolute !important; bottom: 100% !important; left: 0 !important; width: 100% !important; 
+            position: absolute !important; 
+            bottom: var(--panel-bottom, 100%) !important; 
+            top: var(--panel-top, auto) !important;
+            left: 0 !important; width: 100% !important; 
             max-height: 0 !important; background: rgba(255, 255, 255, 0.98) !important; 
-            backdrop-filter: blur(15px) !important; border-radius: 15px 15px 0 0 !important;
+            backdrop-filter: blur(15px) !important; 
+            border-radius: var(--panel-radius, 15px 15px 0 0) !important;
             overflow: hidden !important; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 var(--panel-shadow-y, -5px) 15px rgba(0,0,0,0.05) !important;
             border: 1px solid rgba(0,0,0,0.05) !important;
-            border-bottom: none !important;
             display: block !important;
         }
         #p-list-container.is-open {
@@ -196,11 +253,15 @@
         
         /* 设置面板样式 */
         #p-settings-panel {
-            position: absolute !important; bottom: 100% !important; left: 0 !important; width: 100% !important; 
+            position: absolute !important; 
+            bottom: var(--panel-bottom, 100%) !important; 
+            top: var(--panel-top, auto) !important;
+            left: 0 !important; width: 100% !important; 
             max-height: 0 !important; background: rgba(255, 255, 255, 0.98) !important; 
-            backdrop-filter: blur(15px) !important; border-radius: 15px 15px 0 0 !important;
+            backdrop-filter: blur(15px) !important; 
+            border-radius: var(--panel-radius, 15px 15px 0 0) !important;
             overflow: hidden !important; transition: max-height 0.4s ease !important;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 var(--panel-shadow-y, -5px) 15px rgba(0,0,0,0.05) !important;
             border: 1px solid rgba(0,0,0,0.05) !important;
             z-index: 10 !important;
             display: block !important;
@@ -420,9 +481,16 @@
                 </div>
             </div>
             <div class="setting-row">
+                <span class="setting-label">显示悬浮球</span>
+                <div class="setting-ops" id="p-floating-ops">
+                    <span class="op-btn" data-ball="on">开启</span>
+                    <span class="op-btn" data-ball="off">关闭</span>
+                </div>
+            </div>
+            <div class="setting-row">
                 <span class="setting-label">律动频谱</span>
                 <div class="setting-ops" id="p-visualizer-ops">
-                    <span class="op-btn is-active" data-viz="on">开启</span>
+                    <span class="op-btn" data-viz="on">开启</span>
                     <span class="op-btn" data-viz="off">关闭</span>
                 </div>
             </div>
@@ -450,6 +518,11 @@
     `;
     shadow.appendChild(container);
 
+    const floatingBall = document.createElement('div');
+    floatingBall.id = 'p-floating-ball';
+    floatingBall.innerHTML = '<img id="p-ball-img" src="">';
+    shadow.appendChild(floatingBall);
+
     const lrcContainer = document.createElement('div');
     lrcContainer.id = 'p-lrc-container';
     lrcContainer.innerHTML = '<div id="p-lrc-text"></div>';
@@ -471,16 +544,111 @@
     // --- 核心逻辑：自动隐藏计时器 ---
     
     function startAutoHide() {
-        if (listContainer.classList.contains('is-open') || settingsPanel.classList.contains('is-open')) return; // 列表或设置打开时不自动折叠
+        if (listContainer.classList.contains('is-open') || settingsPanel.classList.contains('is-open')) return;
         clearTimeout(autoHideTimer);
         autoHideTimer = setTimeout(() => {
             container.classList.add('is-hidden');
+            if (configSettings.showFloatingBall) {
+                container.classList.add('has-ball');
+                floatingBall.classList.add('is-visible');
+            } else {
+                container.classList.remove('has-ball');
+            }
         }, 1500);
     }
     function cancelAutoHide() {
         clearTimeout(autoHideTimer);
         container.classList.remove('is-hidden');
+        container.classList.remove('has-ball');
+        floatingBall.classList.remove('is-visible');
     }
+    
+    let isDragging = false;
+    let startX, startY;
+    let initialBallX, initialBallY;
+
+    floatingBall.onmousedown = (e) => {
+        isDragging = false; // 重置
+        startX = e.clientX;
+        startY = e.clientY;
+        initialBallX = configSettings.ballPos.x;
+        initialBallY = configSettings.ballPos.y;
+        
+        const onMouseMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                isDragging = true;
+                const newX = initialBallX + dx;
+                const newY = initialBallY - dy; // bottom 是向上增加的
+                
+                // 边界限制
+                const maxX = window.innerWidth - 50;
+                const maxY = window.innerHeight - 50;
+                configSettings.ballPos.x = Math.max(0, Math.min(maxX, newX));
+                configSettings.ballPos.y = Math.max(0, Math.min(maxY, newY));
+                
+                host.style.setProperty('--ball-x', configSettings.ballPos.x + 'px');
+                host.style.setProperty('--ball-y', configSettings.ballPos.y + 'px');
+            }
+        };
+        
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            if (isDragging) saveSettings();
+        };
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
+    // 触摸支持
+    floatingBall.ontouchstart = (e) => {
+        isDragging = false;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        initialBallX = configSettings.ballPos.x;
+        initialBallY = configSettings.ballPos.y;
+        
+        const onTouchMove = (moveEvent) => {
+            const touchMove = moveEvent.touches[0];
+            const dx = touchMove.clientX - startX;
+            const dy = touchMove.clientY - startY;
+            
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                isDragging = true;
+                const newX = initialBallX + dx;
+                const newY = initialBallY - dy;
+                
+                const maxX = window.innerWidth - 50;
+                const maxY = window.innerHeight - 50;
+                configSettings.ballPos.x = Math.max(0, Math.min(maxX, newX));
+                configSettings.ballPos.y = Math.max(0, Math.min(maxY, newY));
+                
+                host.style.setProperty('--ball-x', configSettings.ballPos.x + 'px');
+                host.style.setProperty('--ball-y', configSettings.ballPos.y + 'px');
+                moveEvent.preventDefault(); // 防止滚动
+            }
+        };
+        
+        const onTouchEnd = () => {
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+            if (isDragging) saveSettings();
+        };
+        
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+    };
+
+    floatingBall.onclick = (e) => {
+        e.stopPropagation();
+        if (!isDragging) {
+            cancelAutoHide();
+        }
+    };
     // 监听：鼠标进入播放器区域不隐藏，离开则开始倒计时
     container.addEventListener('mouseenter', cancelAutoHide);
     container.addEventListener('mouseleave', startAutoHide);
@@ -504,9 +672,31 @@
         }
     }, true); 
     
+    // --- 列表/设置弹出方向自动调整 ---
+    function updatePanelDirection() {
+        const rect = container.getBoundingClientRect();
+        const spaceAbove = rect.top;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        
+        if (spaceAbove < 320 && spaceBelow > spaceAbove) {
+            // 空间不足且下方空间更大，向下弹出
+            container.style.setProperty('--panel-bottom', 'auto');
+            container.style.setProperty('--panel-top', '100%');
+            container.style.setProperty('--panel-radius', '0 0 15px 15px');
+            container.style.setProperty('--panel-shadow-y', '5px');
+        } else {
+            // 默认向上弹出
+            container.style.setProperty('--panel-bottom', '100%');
+            container.style.setProperty('--panel-top', 'auto');
+            container.style.setProperty('--panel-radius', '15px 15px 0 0');
+            container.style.setProperty('--panel-shadow-y', '-5px');
+        }
+    }
+
     // 列表切换
     listToggle.onclick = (e) => {
         e.stopPropagation();
+        updatePanelDirection();
         settingsPanel.classList.remove('is-open');
         listContainer.classList.toggle('is-open');
     };
@@ -514,6 +704,7 @@
     // 设置切换
     settingsToggle.onclick = (e) => {
         e.stopPropagation();
+        updatePanelDirection();
         listContainer.classList.remove('is-open');
         settingsPanel.classList.toggle('is-open');
     };
@@ -606,6 +797,21 @@
            }
        };
 
+       shadow.getElementById('p-floating-ops').onclick = (e) => {
+           if (e.target.dataset.ball) {
+               configSettings.showFloatingBall = e.target.dataset.ball === 'on';
+               updateOpsActive('p-floating-ops', 'ball', e.target.dataset.ball);
+               if (!configSettings.showFloatingBall) {
+                   floatingBall.classList.remove('is-visible');
+                   container.classList.remove('has-ball');
+               } else if (container.classList.contains('is-hidden')) {
+                   floatingBall.classList.add('is-visible');
+                   container.classList.add('has-ball');
+               }
+               saveSettings();
+           }
+       };
+
     function updateOpsActive(parentId, dataAttr, value) {
         shadow.getElementById(parentId).querySelectorAll('.op-btn').forEach(btn => {
             btn.classList.toggle('is-active', btn.dataset[dataAttr] === value);
@@ -635,6 +841,8 @@
         host.style.setProperty('--lrc-color', configSettings.lrcColor);
         host.style.setProperty('--lrc-active-color', configSettings.lrcActiveColor);
         host.style.setProperty('--lrc-opacity', configSettings.lrcOpacity);
+        host.style.setProperty('--ball-x', configSettings.ballPos.x + 'px');
+        host.style.setProperty('--ball-y', configSettings.ballPos.y + 'px');
         
         const opacitySlider = shadow.getElementById('p-lrc-opacity-slider');
         const opacityVal = shadow.getElementById('p-lrc-opacity-val');
@@ -649,6 +857,7 @@
         updateOpsActive('p-speed-ops', 'speed', configSettings.speed.toFixed(1));
         updateOpsActive('p-loop-ops', 'mode', configSettings.loop);
         updateOpsActive('p-lrc-ops', 'lrc', configSettings.showLrc ? 'on' : 'off');
+        updateOpsActive('p-floating-ops', 'ball', configSettings.showFloatingBall ? 'on' : 'off');
         updateOpsActive('p-visualizer-ops', 'viz', configSettings.showVisualizer ? 'on' : 'off');
         visualizerCanvas.style.opacity = configSettings.showVisualizer ? '1' : '0';
 
@@ -714,6 +923,7 @@
         shadow.getElementById('p-title').innerText = track.title;
         shadow.getElementById('p-artist').innerText = track.author || '未知歌手';
         shadow.getElementById('p-cover').src = track.pic;
+        shadow.getElementById('p-ball-img').src = track.pic;
         audio.src = track.url;
         audio.playbackRate = configSettings.speed;
         resetProgress();
@@ -827,10 +1037,12 @@
     };
     audio.onplay = () => {
         shadow.getElementById('p-cover').classList.add('is-playing');
+        floatingBall.classList.add('is-playing');
         playBtn.innerText = '⏸';
     };
     audio.onpause = () => {
         shadow.getElementById('p-cover').classList.remove('is-playing');
+        floatingBall.classList.remove('is-playing');
         playBtn.innerText = '▶';
     };// 播放/暂停
     playBtn.onclick = (e) => {
